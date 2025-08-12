@@ -139,6 +139,10 @@ class PentatonicQuiz:
             # Open and resize image
             pil_image = Image.open(filename)
             
+            # Randomly rotate 180 degrees (50% chance)
+            if random.choice([True, False]):
+                pil_image = pil_image.rotate(180)
+            
             # Calculate size while maintaining aspect ratio
             max_width, max_height = 400, 300
             pil_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
