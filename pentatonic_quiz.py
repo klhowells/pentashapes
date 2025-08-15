@@ -12,13 +12,14 @@ class PentatonicQuiz:
         self.root.configure(bg='#2c3e50')
         
         # Quiz data
-        self.total_questions = 50
+        self.total_questions = 20
         self.current_question = 0
         self.correct_answers = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         self.wrong_answers = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         self.current_shape = None
         self.quiz_active = False
-        
+        self.shape_shown_count = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+
         # Check if image files exist
         self.image_files = []
         for i in range(1, 6):
@@ -28,7 +29,6 @@ class PentatonicQuiz:
             else:
                 messagebox.showerror("Error", f"Image file '{filename}' not found!")
                 return
-        
         self.setup_ui()
         self.start_quiz()
     
@@ -163,6 +163,7 @@ class PentatonicQuiz:
         self.current_question = 0
         self.correct_answers = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         self.wrong_answers = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        self.shape_shown_count = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         self.results_frame.pack_forget()
         self.show_next_question()
     
@@ -174,6 +175,7 @@ class PentatonicQuiz:
         
         self.current_question += 1
         self.current_shape = random.randint(1, 5)
+        self.shape_shown_count[self.current_shape] += 1
         
         # Update UI
         self.progress_label.config(text=f"Question {self.current_question} of {self.total_questions}")
@@ -192,7 +194,11 @@ class PentatonicQuiz:
         """Check if the answer is correct"""
         if not self.quiz_active:
             return
-        
+
+        # Prevent multiple increments per question
+        if self.submit_btn['state'] == 'disabled':
+            return
+
         try:
             user_answer = int(self.answer_var.get())
             if user_answer < 1 or user_answer > 5:
@@ -200,11 +206,11 @@ class PentatonicQuiz:
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a number between 1 and 5")
             return
-        
+
         # Disable entry and submit button
         self.answer_entry.config(state='disabled')
         self.submit_btn.config(state='disabled')
-        
+
         # Check if correct
         if user_answer == self.current_shape:
             self.correct_answers[self.current_shape] += 1
@@ -215,7 +221,7 @@ class PentatonicQuiz:
                 text=f"Incorrect! The correct answer is {self.current_shape}", 
                 fg='#e74c3c'
             )
-        
+
         # Show next button
         if self.current_question < self.total_questions:
             self.next_btn.pack(pady=10)
@@ -223,7 +229,7 @@ class PentatonicQuiz:
             # Last question - show results button
             self.next_btn.config(text="Show Results")
             self.next_btn.pack(pady=10)
-        
+
         # Bind Enter key to next question after showing result
         self.root.bind('<Return>', self.next_question_key)
     
@@ -286,8 +292,7 @@ class PentatonicQuiz:
         # Individual shape results
         for shape in range(1, 6):
             correct = self.correct_answers[shape]
-            wrong = self.wrong_answers[shape]
-            total_shape = correct + wrong
+            total_shape = self.shape_shown_count[shape]
             
             if total_shape > 0:
                 shape_accuracy = (correct / total_shape) * 100
@@ -303,20 +308,6 @@ class PentatonicQuiz:
                 bg='#2c3e50'
             )
             shape_label.pack(pady=2)
-        
-        # Restart button
-        restart_btn = tk.Button(
-            self.results_frame,
-            text="Start New Quiz",
-            font=('Arial', 16),
-            bg='#3498db',
-            fg='white',
-            command=self.restart_quiz,
-            padx=30,
-            pady=10
-        )
-        restart_btn.pack(pady=20)
-        
         # Quit button
         quit_btn = tk.Button(
             self.results_frame,
